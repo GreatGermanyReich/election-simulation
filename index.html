@@ -1,0 +1,4668 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <link
+  rel="manifest"
+  href="./manifest.json"
+>
+
+<meta
+  name="theme-color"
+  content="#1d4ed8"
+>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>開票速報シミュレーション</title>
+
+<style>
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family:
+    -apple-system,
+    BlinkMacSystemFont,
+    "Noto Sans JP",
+    sans-serif;
+  background: #f3f4f6;
+  color: #222;
+}
+
+/* =========================
+   ヘッダー
+========================= */
+
+header {
+  background: #172554;
+  color: white;
+  padding: 12px;
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+}
+
+.header-title {
+  font-size: 20px;
+  font-weight: bold;
+}
+
+.header-sub {
+  font-size: 12px;
+  opacity: 0.8;
+  margin-top: 3px;
+}
+
+/* =========================
+   ナビゲーション
+========================= */
+
+nav {
+  display: flex;
+  overflow-x: auto;
+  background: white;
+  border-bottom: 1px solid #ddd;
+  position: sticky;
+  top: 60px;
+  z-index: 999;
+}
+
+nav button {
+  flex: 0 0 auto;
+  border: none;
+  background: white;
+  padding: 12px 18px;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+nav button.active {
+  color: #1d4ed8;
+  font-weight: bold;
+  border-bottom: 3px solid #1d4ed8;
+}
+
+/* =========================
+   ページ
+========================= */
+
+.page {
+  display: none;
+  padding: 12px;
+  max-width: 1100px;
+  margin: auto;
+}
+
+.page.active {
+  display: block;
+}
+
+/* =========================
+   カード
+========================= */
+
+.card {
+  background: white;
+  border-radius: 10px;
+  padding: 14px;
+  margin-bottom: 12px;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+}
+
+.card-title {
+  font-size: 17px;
+  font-weight: bold;
+  margin-bottom: 10px;
+}
+
+/* =========================
+   全国概要
+========================= */
+
+.summary-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
+}
+
+.summary-box {
+  background: #f8fafc;
+  border-radius: 8px;
+  padding: 12px;
+  text-align: center;
+}
+
+.summary-label {
+  font-size: 12px;
+  color: #666;
+}
+
+.summary-value {
+  font-size: 22px;
+  font-weight: bold;
+  margin-top: 4px;
+}
+
+/* =========================
+   都道府県MAP
+========================= */
+
+.map-container {
+  height: 70vh;
+  min-height: 500px;
+  overflow-y: auto;
+  overflow-x: hidden;
+
+  background: #eef2ff;
+  border-radius: 12px;
+  padding: 10px;
+
+  scroll-behavior: smooth;
+}
+
+/*
+  北海道 → 青森 → 岩手……
+  の順に上から並ぶ
+*/
+
+.pref-map {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 7px;
+}
+
+.pref-button {
+  min-height: 55px;
+  border: 1px solid #c7d2fe;
+  border-radius: 8px;
+
+  background: white;
+  color: #172554;
+
+  font-size: 13px;
+  font-weight: bold;
+
+  cursor: pointer;
+
+  transition: 0.15s;
+}
+
+.pref-button:hover {
+  background: #dbeafe;
+}
+
+.pref-button:active {
+  transform: scale(0.97);
+}
+
+.pref-number {
+  display: block;
+  font-size: 10px;
+  color: #64748b;
+  margin-bottom: 3px;
+}
+
+/* =========================
+   都道府県選択
+========================= */
+
+select,
+input {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid #cbd5e1;
+  border-radius: 7px;
+  font-size: 15px;
+  background: white;
+}
+
+label {
+  display: block;
+  font-size: 13px;
+  font-weight: bold;
+  margin-top: 10px;
+  margin-bottom: 4px;
+}
+
+/* =========================
+   ボタン
+========================= */
+
+button {
+  font-family: inherit;
+}
+
+.btn {
+  border: none;
+  border-radius: 7px;
+  padding: 10px 14px;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.btn-primary {
+  background: #1d4ed8;
+  color: white;
+}
+
+.btn-success {
+  background: #15803d;
+  color: white;
+}
+
+.btn-warning {
+  background: #d97706;
+  color: white;
+}
+
+.btn-danger {
+  background: #dc2626;
+  color: white;
+}
+
+.btn-gray {
+  background: #64748b;
+  color: white;
+}
+
+.button-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+  margin-top: 10px;
+}
+
+/* =========================
+   選挙区
+========================= */
+
+.district-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+}
+
+.district-name {
+  font-size: 20px;
+  font-weight: bold;
+}
+
+.status {
+  display: inline-block;
+  padding: 4px 8px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: bold;
+}
+
+.status-counting {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.status-called {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.status-final {
+  background: #dbeafe;
+  color: #1e40af;
+}
+
+/* =========================
+   開票情報
+========================= */
+
+.counting-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.counting-box {
+  background: #f8fafc;
+  border-radius: 8px;
+  padding: 10px;
+}
+
+.counting-label {
+  font-size: 11px;
+  color: #64748b;
+}
+
+.counting-value {
+  font-size: 18px;
+  font-weight: bold;
+  margin-top: 3px;
+}
+
+/* =========================
+   候補者
+========================= */
+
+.candidate {
+  border: 1px solid #e2e8f0;
+  border-radius: 9px;
+  padding: 11px;
+  margin-bottom: 8px;
+  background: white;
+}
+
+.candidate-top {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.candidate-name {
+  font-weight: bold;
+  font-size: 16px;
+}
+
+.candidate-party {
+  font-size: 12px;
+  color: #64748b;
+}
+
+.candidate-votes {
+  font-size: 18px;
+  font-weight: bold;
+  text-align: right;
+}
+
+.vote-bar-bg {
+  height: 9px;
+  background: #e5e7eb;
+  border-radius: 10px;
+  overflow: hidden;
+  margin-top: 8px;
+}
+
+.vote-bar {
+  height: 100%;
+  background: #2563eb;
+  border-radius: 10px;
+  transition: width 0.3s;
+}
+
+.vote-percent {
+  font-size: 12px;
+  color: #475569;
+  margin-top: 4px;
+}
+
+/* =========================
+   当確・議席確定
+========================= */
+
+.result-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  margin-top: 7px;
+}
+
+.badge {
+  display: inline-block;
+  padding: 4px 7px;
+  border-radius: 5px;
+  font-size: 11px;
+  font-weight: bold;
+}
+
+.badge-called {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.badge-elected {
+  background: #dbeafe;
+  color: #1e40af;
+}
+
+.badge-proportional {
+  background: #f3e8ff;
+  color: #7e22ce;
+}
+
+/* ==================================================
+   半円議席グラフ
+================================================== */
+
+.half-seat-chart {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+
+/* 半円の外側 */
+
+.half-seat-pie {
+  width: 300px;
+  height: 150px;
+
+  position: relative;
+
+  overflow: hidden;
+}
+
+
+/* 色付きの円 */
+
+.half-seat-pie-color {
+  width: 300px;
+  height: 300px;
+
+  border-radius: 50%;
+
+  position: absolute;
+
+  left: 0;
+  top: 0;
+}
+
+
+/* 中央のくり抜き */
+
+.half-seat-hole {
+  position: absolute;
+
+  width: 150px;
+  height: 150px;
+
+  border-radius: 50%;
+
+  background: white;
+
+  left: 75px;
+  top: 75px;
+
+  display: flex;
+  flex-direction: column;
+
+  align-items: center;
+  justify-content: center;
+
+  text-align: center;
+}
+
+
+.half-seat-hole strong {
+  font-size: 28px;
+}
+
+
+.half-seat-hole span {
+  font-size: 13px;
+}
+
+
+/* 与党・未確定・野党 */
+
+.half-seat-summary {
+  width: 100%;
+
+  display: flex;
+
+  justify-content: space-around;
+
+  text-align: center;
+
+  margin-top: 12px;
+}
+
+
+.half-seat-summary div {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+
+.half-seat-summary strong {
+  font-size: 15px;
+}
+
+
+.half-seat-summary span {
+  font-size: 13px;
+}
+
+
+/* 政党別 */
+
+.half-seat-info {
+  width: 100%;
+  max-width: 500px;
+}
+/* =========================
+   比例代表
+========================= */
+
+.proportional-party {
+  border: 1px solid #e2e8f0;
+  border-radius: 9px;
+  padding: 11px;
+  margin-bottom: 8px;
+}
+
+.proportional-top {
+  display: flex;
+  justify-content: space-between;
+}
+
+.proportional-party-name {
+  font-weight: bold;
+}
+
+.proportional-votes {
+  font-weight: bold;
+}
+
+.proportional-bar-bg {
+  height: 8px;
+  background: #e5e7eb;
+  border-radius: 10px;
+  overflow: hidden;
+  margin-top: 7px;
+}
+
+.proportional-bar {
+  height: 100%;
+  background: #7c3aed;
+}
+
+/* =========================
+   入力フォーム
+========================= */
+
+.editor-row {
+  border: 1px solid #e2e8f0;
+  padding: 10px;
+  border-radius: 8px;
+  margin-bottom: 8px;
+}
+
+.editor-title {
+  font-weight: bold;
+  margin-bottom: 5px;
+}
+
+.editor-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 7px;
+}
+
+/* =========================
+   フッター
+========================= */
+
+footer {
+  text-align: center;
+  font-size: 11px;
+  color: #64748b;
+  padding: 25px 10px;
+}
+
+/* =========================
+   スマホ
+========================= */
+
+@media (max-width: 600px) {
+
+  .pref-map {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .summary-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .counting-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .candidate-top {
+    align-items: flex-start;
+  }
+
+  .district-name {
+    font-size: 18px;
+  }
+
+}
+
+/* =========================
+   大きい画面
+========================= */
+
+@media (min-width: 900px) {
+
+  .pref-map {
+    grid-template-columns: repeat(5, 1fr);
+  }
+
+  .summary-grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+
+  .counting-grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+
+}
+
+</style>
+</head>
+
+<body>
+
+<header>
+  <div class="header-title">
+    開票速報
+  </div>
+
+  <div class="header-sub">
+    衆議院議員総選挙シミュレーション
+  </div>
+</header>
+
+<nav>
+
+  <button
+    id="nav-home"
+    class="active"
+    onclick="showPage('home')">
+    全国
+  </button>
+
+  <button
+    id="nav-map"
+    onclick="showPage('map')">
+    都道府県
+  </button>
+
+  <button
+    id="nav-district"
+    onclick="showPage('district')">
+    小選挙区
+  </button>
+
+  <button
+    id="nav-proportional"
+    onclick="showPage('proportional')">
+    比例代表
+  </button>
+
+  <button
+    id="nav-editor"
+    onclick="showPage('editor')">
+    データ入力
+  </button>
+
+</nav>
+
+
+<!-- ==================================================
+     全国ページ
+================================================== -->
+
+<section id="home" class="page active">
+
+  <div class="card">
+
+    <div class="card-title">
+      全国開票状況
+    </div>
+
+    <div class="summary-grid">
+
+      <div class="summary-box">
+        <div class="summary-label">
+          小選挙区
+        </div>
+
+        <div
+          id="summary-single"
+          class="summary-value">
+          0 / 289
+        </div>
+      </div>
+
+      <div class="summary-box">
+        <div class="summary-label">
+          比例代表
+        </div>
+
+        <div
+          id="summary-proportional"
+          class="summary-value">
+          0 / 176
+        </div>
+      </div>
+
+      <div class="summary-box">
+        <div class="summary-label">
+          議席確定
+        </div>
+
+        <div
+          id="summary-total"
+          class="summary-value">
+          0
+        </div>
+      </div>
+
+      <div class="summary-box">
+        <div class="summary-label">
+          当確
+        </div>
+
+        <div
+          id="summary-called"
+          class="summary-value">
+          0
+        </div>
+      </div>
+
+    </div>
+
+  </div>
+
+
+  <!-- 議席グラフ -->
+
+  <div class="card">
+
+    <div class="card-title">
+      政党別議席状況
+    </div>
+
+    <div
+      id="seatChart"
+      class="seat-chart">
+    </div>
+
+  </div>
+
+
+  <!-- 全国の投票状況 -->
+
+  <div class="card">
+
+    <div class="card-title">
+      全国投票状況
+    </div>
+
+    <div class="summary-grid">
+
+      <div class="summary-box">
+
+        <div class="summary-label">
+          有権者数
+        </div>
+
+        <div
+          id="nationalEligible"
+          class="summary-value">
+          0
+        </div>
+
+      </div>
+
+      <div class="summary-box">
+
+        <div class="summary-label">
+          投票者数
+        </div>
+
+        <div
+          id="nationalVoters"
+          class="summary-value">
+          0
+        </div>
+
+      </div>
+
+      <div class="summary-box">
+
+        <div class="summary-label">
+          投票率
+        </div>
+
+        <div
+          id="nationalTurnout"
+          class="summary-value">
+          0.0%
+        </div>
+
+      </div>
+
+      <div class="summary-box">
+
+        <div class="summary-label">
+          開票率
+        </div>
+
+        <div
+          id="nationalOpening"
+          class="summary-value">
+          0.0%
+        </div>
+
+      </div>
+
+    </div>
+
+  </div>
+
+</section>
+
+
+<!-- ==================================================
+     都道府県MAP
+================================================== -->
+
+<section id="map" class="page">
+
+  <div class="card">
+
+    <div class="card-title">
+      都道府県
+    </div>
+
+    <div
+      id="prefMap"
+      class="map-container">
+
+      <div
+        id="prefButtons"
+        class="pref-map">
+      </div>
+
+    </div>
+
+  </div>
+
+</section>
+
+
+<!-- ==================================================
+     小選挙区
+================================================== -->
+
+<section id="district" class="page">
+
+  <div class="card">
+
+    <div class="card-title">
+      小選挙区開票速報
+    </div>
+
+    <label>
+      都道府県
+    </label>
+
+    <select
+      id="districtPrefSelect"
+      onchange="createDistrictEditor()">
+    </select>
+
+    <label>
+      選挙区
+    </label>
+
+    <select
+      id="districtSelect"
+      onchange="updateDistrict()">
+    </select>
+
+  </div>
+
+
+  <div
+    id="districtDisplay">
+  </div>
+
+</section>
+
+
+<!-- ==================================================
+     比例代表
+================================================== -->
+
+<section id="proportional" class="page">
+
+  <div class="card">
+
+    <div class="card-title">
+      比例代表開票速報
+    </div>
+
+    <label>
+      比例ブロック
+    </label>
+
+    <select
+      id="blockSelect"
+      onchange="displayProportional()">
+    </select>
+
+  </div>
+
+
+  <div
+    id="proportionalDisplay">
+  </div>
+
+</section>
+
+
+<!-- ==================================================
+     データ入力
+================================================== -->
+
+<section id="editor" class="page">
+
+  <div class="card">
+
+    <div class="card-title">
+      小選挙区データ入力
+    </div>
+
+    <label>
+      都道府県
+    </label>
+
+    <select
+      id="editorPrefSelect"
+      onchange="createDistrictEditor()">
+    </select>
+
+    <label>
+      選挙区
+    </label>
+
+    <select
+      id="editorDistrictSelect"
+      onchange="updateDistrictEditor()">
+    </select>
+
+  </div>
+
+
+<div id="districtEditor"></div>
+
+<div class="card">
+  
+  <h3>政党名設定</h3>
+  
+  <div id="partyNameEditor"></div>
+  
+</div>
+
+
+<div class="card">
+  
+  <h3>与党・野党設定</h3>
+  
+  <div id="partyStatusEditor"></div>
+  
+</div>
+
+    <div class="card-title">
+      比例代表データ入力
+    </div>
+
+    <div
+      id="proportionalEditor">
+    </div>
+
+  </div>
+
+
+  <div class="card">
+
+    <div class="card-title">
+      データ管理
+    </div>
+
+    <div class="button-row">
+
+      <button
+        class="btn btn-primary"
+        onclick="saveData()">
+        保存
+      </button>
+
+      <button
+        class="btn btn-danger"
+        onclick="resetData()">
+        初期データに戻す
+      </button>
+
+    </div>
+
+  </div>
+
+</section>
+
+
+<footer>
+
+  ※このページは選挙開票のシミュレーション用です。<br>
+  実際の選挙結果を示すものではありません。
+
+</footer>
+
+
+<!--
+==================================================
+ここから② JavaScript前半を貼る
+==================================================
+-->
+
+<script>
+
+/* ==================================================
+   基本設定
+================================================== */
+
+const TOTAL_SINGLE_SEATS = 289;
+const TOTAL_PR_SEATS = 176;
+
+
+/* ==================================================
+   都道府県
+   北海道 → 青森 → 岩手……の順
+================================================== */
+
+const prefectures = [
+  "北海道",
+  "青森県",
+  "岩手県",
+  "宮城県",
+  "秋田県",
+  "山形県",
+  "福島県",
+  "茨城県",
+  "栃木県",
+  "群馬県",
+  "埼玉県",
+  "千葉県",
+  "東京都",
+  "神奈川県",
+  "新潟県",
+  "富山県",
+  "石川県",
+  "福井県",
+  "山梨県",
+  "長野県",
+  "岐阜県",
+  "静岡県",
+  "愛知県",
+  "三重県",
+  "滋賀県",
+  "京都府",
+  "大阪府",
+  "兵庫県",
+  "奈良県",
+  "和歌山県",
+  "鳥取県",
+  "島根県",
+  "岡山県",
+  "広島県",
+  "山口県",
+  "徳島県",
+  "香川県",
+  "愛媛県",
+  "高知県",
+  "福岡県",
+  "佐賀県",
+  "長崎県",
+  "熊本県",
+  "大分県",
+  "宮崎県",
+  "鹿児島県",
+  "沖縄県"
+];
+
+
+/* ==================================================
+   選挙区数
+================================================== */
+
+const districtCounts = {
+
+  "北海道": 12,
+
+  "青森県": 3,
+  "岩手県": 3,
+  "宮城県": 5,
+  "秋田県": 3,
+  "山形県": 3,
+  "福島県": 4,
+
+  "茨城県": 7,
+  "栃木県": 5,
+  "群馬県": 5,
+  "埼玉県": 16,
+  "千葉県": 14,
+  "東京都": 30,
+  "神奈川県": 20,
+
+  "新潟県": 5,
+  "富山県": 3,
+  "石川県": 3,
+  "福井県": 2,
+  "山梨県": 2,
+  "長野県": 5,
+  "岐阜県": 5,
+  "静岡県": 8,
+  "愛知県": 16,
+  "三重県": 4,
+
+  "滋賀県": 3,
+  "京都府": 6,
+  "大阪府": 19,
+  "兵庫県": 12,
+  "奈良県": 3,
+  "和歌山県": 2,
+
+  "鳥取県": 2,
+  "島根県": 2,
+  "岡山県": 4,
+  "広島県": 6,
+  "山口県": 3,
+
+  "徳島県": 2,
+  "香川県": 3,
+  "愛媛県": 3,
+  "高知県": 2,
+
+  "福岡県": 11,
+  "佐賀県": 2,
+  "長崎県": 3,
+  "熊本県": 4,
+  "大分県": 3,
+  "宮崎県": 3,
+  "鹿児島県": 4,
+  "沖縄県": 4
+};
+
+
+/* ==================================================
+   政党
+================================================== */
+
+let parties = [
+  "政党A",
+  "政党B",
+  "政党C",
+  "政党D",
+  "政党E"
+];
+
+/* ==================================================
+   政党名
+================================================== */
+
+let partyNames = {
+  "政党A": "政党A",
+  "政党B": "政党B",
+  "政党C": "政党C",
+  "政党D": "政党D",
+  "政党E": "政党E"
+};
+/* ==================================================
+   比例ブロック
+================================================== */
+
+const proportionalBlocks = {
+
+  "北海道": {
+    seats: 8
+  },
+
+  "東北": {
+    seats: 13
+  },
+
+  "北関東": {
+    seats: 19
+  },
+
+  "南関東": {
+    seats: 23
+  },
+
+  "東京": {
+    seats: 19
+  },
+
+  "北陸信越": {
+    seats: 11
+  },
+
+  "東海": {
+    seats: 21
+  },
+
+  "近畿": {
+    seats: 28
+  },
+
+  "中国": {
+    seats: 10
+  },
+
+  "四国": {
+    seats: 6
+  },
+
+  "九州": {
+    seats: 20
+  }
+
+};
+
+
+/* ==================================================
+   データ
+================================================== */
+
+let electionData = {
+  districts: {},
+  proportional: {}
+};
+
+let partyStatus = {
+  "政党A": "ruling",
+  "政党B": "opposition",
+  "政党C": "opposition",
+  "政党D": "opposition",
+  "政党E": "opposition"
+};
+/* ==================================================
+   初期データ作成
+================================================== */
+
+function createInitialData() {
+
+  electionData = {
+    districts: {},
+    proportional: {}
+  };
+
+
+  /*
+   * 小選挙区
+   */
+
+  prefectures.forEach(pref => {
+
+    const count = districtCounts[pref] || 1;
+
+    electionData.districts[pref] = [];
+
+
+    for (let i = 1; i <= count; i++) {
+
+      electionData.districts[pref].push({
+
+        district: i,
+
+        /*
+         * 有権者数
+         */
+        eligibleVoters: 100000,
+
+        /*
+         * 実際に投票した人数
+         */
+        voters: 60000,
+candidates:[
+  {
+    name:"候補者A",
+    party:"自由民主党",
+    votes:0,
+    called:false,
+    elected:false,
+    ruling:true
+  },
+  {
+    name:"候補者B",
+    party:"政党B",
+    votes:0,
+    called:false,
+    elected:false,
+    ruling:false
+  },
+  {
+    name:"候補者C",
+    party:"政党C",
+    votes:0,
+    called:false,
+    elected:false,
+    ruling:false
+  }
+]
+
+      });
+
+    }
+
+  });
+
+
+/*
+ * 比例代表
+ */
+
+Object.keys(proportionalBlocks).forEach(block => {
+  
+  electionData.proportional[block] = {
+    
+    /*
+     * 有権者数
+     */
+    eligibleVoters: 1000000,
+    
+    /*
+     * 投票者数
+     */
+    voters: 600000,
+    
+    parties: parties.map(party => ({
+      
+      party: party,
+      
+      votes: 0,
+      
+      /*
+       * 当確
+       */
+      called: false,
+      
+      /*
+       * 議席確定
+       */
+      electedSeats: 0,
+      
+      /*
+       * 与党かどうか
+       * 現在は政党Aを与党にする
+       */
+      ruling: partyStatus[party] === "ruling"
+      
+    }))
+    
+  };
+  
+});
+
+}
+
+
+/* ==================================================
+   数値表示
+================================================== */
+
+function formatNumber(number) {
+
+  return Number(number || 0).toLocaleString("ja-JP");
+
+}
+
+
+/* ==================================================
+   パーセント
+================================================== */
+
+function formatPercent(value) {
+
+  if (!isFinite(value)) {
+    return "0.0%";
+  }
+
+  return value.toFixed(1) + "%";
+
+}
+
+
+/* ==================================================
+   開票率
+   入力済み投票数 ÷ 投票者数
+================================================== */
+
+function calculateOpeningRate(data) {
+
+  if (!data) {
+    return 0;
+  }
+
+
+  const totalVotes = data.candidates.reduce(
+    (sum, candidate) => {
+
+      return sum + Number(candidate.votes || 0);
+
+    },
+    0
+  );
+
+
+  if (Number(data.voters) <= 0) {
+    return 0;
+  }
+
+
+  return (
+    totalVotes /
+    Number(data.voters) *
+    100
+  );
+
+}
+
+
+/* ==================================================
+   投票率
+   投票者数 ÷ 有権者数
+================================================== */
+
+function calculateTurnoutRate(data) {
+
+  if (!data) {
+    return 0;
+  }
+
+
+  const eligible =
+    Number(data.eligibleVoters || 0);
+
+  const voters =
+    Number(data.voters || 0);
+
+
+  if (eligible <= 0) {
+    return 0;
+  }
+
+
+  return (
+    voters /
+    eligible *
+    100
+  );
+
+}
+
+
+/* ==================================================
+   比例代表の開票率
+================================================== */
+
+function calculateProportionalOpening(data) {
+
+  if (!data) {
+    return 0;
+  }
+
+
+  const totalVotes =
+    data.parties.reduce(
+      (sum, party) => {
+
+        return sum +
+          Number(party.votes || 0);
+
+      },
+      0
+    );
+
+
+  if (Number(data.voters) <= 0) {
+    return 0;
+  }
+
+
+  return (
+    totalVotes /
+    Number(data.voters) *
+    100
+  );
+
+}
+
+
+/* ==================================================
+   比例代表の投票率
+================================================== */
+
+function calculateProportionalTurnout(data) {
+
+  if (!data) {
+    return 0;
+  }
+
+
+  const eligible =
+    Number(data.eligibleVoters || 0);
+
+  const voters =
+    Number(data.voters || 0);
+
+
+  if (eligible <= 0) {
+    return 0;
+  }
+
+
+  return (
+    voters /
+    eligible *
+    100
+  );
+
+}
+
+
+/* ==================================================
+   現在の選挙区
+================================================== */
+
+function getCurrentDistrict() {
+
+  const pref =
+    document.getElementById(
+      "districtPrefSelect"
+    )?.value;
+
+
+  const select =
+    document.getElementById(
+      "districtSelect"
+    );
+
+
+  if (!pref || !select) {
+    return null;
+  }
+
+
+  const index =
+    Number(select.value);
+
+
+  if (
+    !electionData.districts[pref] ||
+    !electionData.districts[pref][index]
+  ) {
+    return null;
+  }
+
+
+  return electionData.districts[pref][index];
+
+}
+
+
+/* ==================================================
+   都道府県MAP作成
+================================================== */
+
+function createMap() {
+
+  const container =
+    document.getElementById(
+      "prefButtons"
+    );
+
+
+  if (!container) {
+    return;
+  }
+
+
+  container.innerHTML = "";
+
+
+  prefectures.forEach(
+    (pref, index) => {
+
+      const button =
+        document.createElement(
+          "button"
+        );
+
+
+      button.className =
+        "pref-button";
+
+
+      button.innerHTML = `
+        <span class="pref-number">
+          ${index + 1}
+        </span>
+        ${pref}
+      `;
+
+
+      button.onclick = () => {
+
+        openPrefecture(pref);
+
+      };
+
+
+      container.appendChild(button);
+
+    }
+  );
+
+}
+
+
+/* ==================================================
+   都道府県を開く
+================================================== */
+
+function openPrefecture(pref) {
+
+  showPage("district");
+
+
+  const select =
+    document.getElementById(
+      "districtPrefSelect"
+    );
+
+
+  if (!select) {
+    return;
+  }
+
+
+  select.value = pref;
+
+
+  createDistrictEditor();
+
+}
+
+
+/* ==================================================
+   都道府県セレクト作成
+================================================== */
+
+function createPrefSelect() {
+
+  const districtPref =
+    document.getElementById(
+      "districtPrefSelect"
+    );
+
+  const editorPref =
+    document.getElementById(
+      "editorPrefSelect"
+    );
+
+
+  /* 小選挙区表示用 */
+
+  if (districtPref) {
+
+    districtPref.innerHTML = "";
+
+    prefectures.forEach(pref => {
+
+      const option =
+        document.createElement("option");
+
+      option.value = pref;
+
+      option.textContent = pref;
+
+      districtPref.appendChild(option);
+
+    });
+
+    districtPref.onchange = function() {
+
+      createDistrictEditor();
+
+    };
+
+  }
+
+
+  /* データ入力用 */
+
+  if (editorPref) {
+
+    editorPref.innerHTML = "";
+
+    prefectures.forEach(pref => {
+
+      const option =
+        document.createElement("option");
+
+      option.value = pref;
+
+      option.textContent = pref;
+
+      editorPref.appendChild(option);
+
+    });
+
+    editorPref.onchange =
+      changeEditorPrefecture;
+
+  }
+
+
+  /* 初期値 */
+
+  if (districtPref) {
+    districtPref.value =
+      prefectures[0];
+  }
+
+  if (editorPref) {
+    editorPref.value =
+      prefectures[0];
+  }
+
+
+  createDistrictEditor();
+
+  changeEditorPrefecture();
+
+}
+
+
+/* ==================================================
+   選挙区選択作成
+================================================== */
+
+function createDistrictEditor() {
+
+  const districtPref =
+    document.getElementById(
+      "districtPrefSelect"
+    );
+
+
+  const editorPref =
+    document.getElementById(
+      "editorPrefSelect"
+    );
+
+
+  /*
+   * 同じ都道府県を同期
+   */
+
+  if (
+    districtPref &&
+    editorPref
+  ) {
+
+    editorPref.value =
+      districtPref.value;
+
+  }
+
+
+  const pref =
+    districtPref?.value ||
+    editorPref?.value ||
+    prefectures[0];
+
+
+  /*
+   * 表示用
+   */
+
+  const districtSelect =
+    document.getElementById(
+      "districtSelect"
+    );
+
+
+  if (districtSelect) {
+
+    districtSelect.innerHTML = "";
+
+
+    const districts =
+      electionData.districts[pref] ||
+      [];
+
+
+    districts.forEach(
+      (district, index) => {
+
+        const option =
+          document.createElement(
+            "option"
+          );
+
+
+        option.value = index;
+
+
+        option.textContent =
+          pref +
+          " 第" +
+          district.district +
+          "区";
+
+
+        districtSelect.appendChild(
+          option
+        );
+
+      }
+    );
+
+  }
+
+
+  /*
+   * 入力用
+   */
+
+  const editorDistrictSelect =
+    document.getElementById(
+      "editorDistrictSelect"
+    );
+
+
+  if (editorDistrictSelect) {
+
+    editorDistrictSelect.innerHTML =
+      "";
+
+
+    const districts =
+      electionData.districts[pref] ||
+      [];
+
+
+    districts.forEach(
+      (district, index) => {
+
+        const option =
+          document.createElement(
+            "option"
+          );
+
+
+        option.value = index;
+
+
+        option.textContent =
+          pref +
+          " 第" +
+          district.district +
+          "区";
+
+
+        editorDistrictSelect.appendChild(
+          option
+        );
+
+      }
+    );
+
+  }
+
+
+  displayDistrict();
+
+  updateDistrictEditor();
+
+}
+
+
+/* ==================================================
+   選挙区表示
+================================================== */
+
+function displayDistrict() {
+
+  const container =
+    document.getElementById(
+      "districtDisplay"
+    );
+
+
+  if (!container) {
+    return;
+  }
+
+
+  const data =
+    getCurrentDistrict();
+
+
+  if (!data) {
+
+    container.innerHTML =
+      `<div class="card">
+        データがありません。
+      </div>`;
+
+    return;
+
+  }
+
+
+  /*
+   * 投票者数
+   */
+
+  const voters =
+    Number(data.voters || 0);
+
+
+  /*
+   * 有権者数
+   */
+
+  const eligible =
+    Number(
+      data.eligibleVoters || 0
+    );
+
+
+  /*
+   * 入力済み票
+   */
+
+  const totalVotes =
+    data.candidates.reduce(
+      (sum, candidate) => {
+
+        return sum +
+          Number(candidate.votes || 0);
+
+      },
+      0
+    );
+
+
+  /*
+   * 投票率
+   */
+
+  const turnoutRate =
+    calculateTurnoutRate(data);
+
+
+  /*
+   * 開票率
+   */
+
+  const openingRate =
+    calculateOpeningRate(data);
+
+
+  /*
+   * 候補者を得票順にする
+   */
+
+  const candidates =
+    [...data.candidates]
+      .sort(
+        (a, b) =>
+          Number(b.votes || 0) -
+          Number(a.votes || 0)
+      );
+
+
+  /*
+   * 状態
+   */
+
+  let statusText =
+    "開票中";
+
+  let statusClass =
+    "status-counting";
+
+
+  const elected =
+    candidates.find(
+      candidate =>
+        candidate.elected
+    );
+
+
+  if (elected) {
+
+    statusText =
+      "議席確定";
+
+    statusClass =
+      "status-final";
+
+  } else {
+
+    const called =
+      candidates.find(
+        candidate =>
+          candidate.called
+      );
+
+
+    if (called) {
+
+      statusText =
+        "当確";
+
+      statusClass =
+        "status-called";
+
+    }
+
+  }
+
+
+  let html = `
+
+    <div class="card">
+
+      <div class="district-header">
+
+        <div class="district-name">
+          第${data.district}区
+        </div>
+
+        <div class="status ${statusClass}">
+          ${statusText}
+        </div>
+
+      </div>
+
+
+      <div class="counting-grid">
+
+        <div class="counting-box">
+
+          <div class="counting-label">
+            有権者数
+          </div>
+
+          <div class="counting-value">
+            ${formatNumber(eligible)}人
+          </div>
+
+        </div>
+
+
+        <div class="counting-box">
+
+          <div class="counting-label">
+            投票者数
+          </div>
+
+          <div class="counting-value">
+            ${formatNumber(voters)}人
+          </div>
+
+        </div>
+
+
+        <div class="counting-box">
+
+          <div class="counting-label">
+            投票率
+          </div>
+
+          <div class="counting-value">
+            ${formatPercent(turnoutRate)}
+          </div>
+
+        </div>
+
+
+        <div class="counting-box">
+
+          <div class="counting-label">
+            開票率
+          </div>
+
+          <div class="counting-value">
+            ${formatPercent(openingRate)}
+          </div>
+
+        </div>
+
+      </div>
+
+    </div>
+
+  `;
+
+
+  /*
+   * 候補者
+   */
+
+  candidates.forEach(
+    candidate => {
+
+      const votes =
+        Number(candidate.votes || 0);
+
+
+      const percent =
+        totalVotes > 0
+          ? votes / totalVotes * 100
+          : 0;
+
+
+      html += `
+
+        <div class="card candidate">
+
+          <div class="candidate-top">
+
+            <div>
+
+              <div class="candidate-name">
+                ${escapeHTML(candidate.name)}
+              </div>
+
+              <div class="candidate-party">
+                ${escapeHTML(candidate.party)}
+              </div>
+
+            </div>
+
+
+            <div class="candidate-votes">
+              ${formatNumber(votes)}票
+            </div>
+
+          </div>
+
+
+          <div class="vote-bar-bg">
+
+            <div
+              class="vote-bar"
+              style="width:${percent}%">
+            </div>
+
+          </div>
+
+
+          <div class="vote-percent">
+            得票率 ${formatPercent(percent)}
+          </div>
+
+
+          <div class="result-badges">
+
+            ${
+              candidate.called
+              ? `
+                <span class="badge badge-called">
+                  当確
+                </span>
+              `
+              : ""
+            }
+
+
+            ${
+              candidate.elected
+              ? `
+                <span class="badge badge-elected">
+                  議席確定
+                </span>
+              `
+              : ""
+            }
+
+          </div>
+
+        </div>
+
+      `;
+
+    }
+  );
+
+
+  container.innerHTML = html;
+
+}
+
+
+/* ==================================================
+   HTMLエスケープ
+================================================== */
+
+function escapeHTML(value) {
+
+  return String(value ?? "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+
+}
+
+
+/* ==================================================
+   選挙区変更
+================================================== */
+
+function updateDistrict() {
+
+  displayDistrict();
+
+  updateDistrictEditor();
+
+}
+
+
+/* ==================================================
+   ページ切り替え
+================================================== */
+
+function showPage(pageId) {
+
+  document
+    .querySelectorAll(".page")
+    .forEach(page => {
+
+      page.classList.remove(
+        "active"
+      );
+
+    });
+
+
+  const page =
+    document.getElementById(pageId);
+
+
+  if (page) {
+
+    page.classList.add(
+      "active"
+    );
+
+  }
+
+
+  document
+    .querySelectorAll("nav button")
+    .forEach(button => {
+
+      button.classList.remove(
+        "active"
+      );
+
+    });
+
+
+  const nav =
+    document.getElementById(
+      "nav-" + pageId
+    );
+
+
+  if (nav) {
+
+    nav.classList.add(
+      "active"
+    );
+
+  }
+
+
+  /*
+   * 全国ページなら集計更新
+   */
+
+  if (pageId === "home") {
+
+    updateNationalSummary();
+
+  }
+
+
+  /*
+   * 比例代表なら表示更新
+   */
+
+  if (pageId === "proportional") {
+
+    displayProportional();
+
+  }
+  
+if (pageId === "editor") {
+
+  changeEditorPrefecture();
+
+  createPartyNameEditor();
+
+  createProportionalEditor();
+
+  createPartyStatusEditor();
+
+}
+
+}
+
+/* ==================================================
+   全国集計
+================================================== */
+
+function updateNationalSummary() {
+
+  let singleElected = 0;
+  let singleCalled = 0;
+
+  let nationalEligible = 0;
+  let nationalVoters = 0;
+  let nationalVotes = 0;
+
+
+  /* 小選挙区 */
+
+  Object.values(electionData.districts).forEach(
+    districts => {
+
+      districts.forEach(district => {
+
+        nationalEligible +=
+          Number(district.eligibleVoters || 0);
+
+        nationalVoters +=
+          Number(district.voters || 0);
+
+
+        district.candidates.forEach(candidate => {
+
+          nationalVotes +=
+            Number(candidate.votes || 0);
+
+
+          if (candidate.called) {
+            singleCalled++;
+          }
+
+
+          if (candidate.elected) {
+            singleElected++;
+          }
+
+        });
+
+      });
+
+    }
+  );
+
+
+  /* 比例代表 */
+
+  let proportionalElected = 0;
+  let proportionalCalled = 0;
+
+  let proportionalEligible = 0;
+  let proportionalVoters = 0;
+  let proportionalVotes = 0;
+
+
+  Object.values(electionData.proportional).forEach(
+    block => {
+
+      proportionalEligible +=
+        Number(block.eligibleVoters || 0);
+
+      proportionalVoters +=
+        Number(block.voters || 0);
+
+
+      block.parties.forEach(party => {
+
+        proportionalVotes +=
+          Number(party.votes || 0);
+
+
+        if (party.called) {
+          proportionalCalled++;
+        }
+
+
+        proportionalElected +=
+          Number(party.electedSeats || 0);
+
+      });
+
+    }
+  );
+
+
+  /* =========================
+     小選挙区
+  ========================= */
+
+  const singleElement =
+    document.getElementById("summary-single");
+
+
+  if (singleElement) {
+
+    singleElement.textContent =
+      `${singleElected} / ${TOTAL_SINGLE_SEATS}`;
+
+  }
+
+
+  /* =========================
+     比例代表
+  ========================= */
+
+  const proportionalElement =
+    document.getElementById(
+      "summary-proportional"
+    );
+
+
+  if (proportionalElement) {
+
+    proportionalElement.textContent =
+      `${proportionalElected} / ${TOTAL_PR_SEATS}`;
+
+  }
+
+
+  /* =========================
+     合計議席
+  ========================= */
+
+  const totalElement =
+    document.getElementById(
+      "summary-total"
+    );
+
+
+  if (totalElement) {
+
+    totalElement.textContent =
+      formatNumber(
+        singleElected +
+        proportionalElected
+      );
+
+  }
+
+
+  /* =========================
+     当確
+  ========================= */
+
+  const calledElement =
+    document.getElementById(
+      "summary-called"
+    );
+
+
+  if (calledElement) {
+
+    calledElement.textContent =
+      formatNumber(
+        singleCalled +
+        proportionalCalled
+      );
+
+  }
+
+
+  /* =========================
+     全国有権者数
+  ========================= */
+
+  const eligibleElement =
+    document.getElementById(
+      "nationalEligible"
+    );
+
+
+  if (eligibleElement) {
+
+    eligibleElement.textContent =
+      formatNumber(
+        nationalEligible +
+        proportionalEligible
+      );
+
+  }
+
+
+  /* =========================
+     全国投票者数
+  ========================= */
+
+  const votersElement =
+    document.getElementById(
+      "nationalVoters"
+    );
+
+
+  if (votersElement) {
+
+    votersElement.textContent =
+      formatNumber(
+        nationalVoters +
+        proportionalVoters
+      );
+
+  }
+
+
+  /* =========================
+     全国投票率
+  ========================= */
+
+  const turnoutElement =
+    document.getElementById(
+      "nationalTurnout"
+    );
+
+
+  if (turnoutElement) {
+
+    const totalEligible =
+      nationalEligible +
+      proportionalEligible;
+
+
+    const totalVoters =
+      nationalVoters +
+      proportionalVoters;
+
+
+    const turnout =
+      totalEligible > 0
+        ? totalVoters /
+          totalEligible *
+          100
+        : 0;
+
+
+    turnoutElement.textContent =
+      formatPercent(turnout);
+
+  }
+
+
+  /* =========================
+     全国開票率
+  ========================= */
+
+  const openingElement =
+    document.getElementById(
+      "nationalOpening"
+    );
+
+
+  if (openingElement) {
+
+    const totalVoters =
+      nationalVoters +
+      proportionalVoters;
+
+
+    const opening =
+      totalVoters > 0
+        ? (
+            nationalVotes +
+            proportionalVotes
+          ) /
+          totalVoters *
+          100
+        : 0;
+
+
+    openingElement.textContent =
+      formatPercent(opening);
+
+  }
+
+
+  updateSeatChart();
+
+}
+
+
+/* ==================================================
+   政党別議席集計
+================================================== */
+
+function calculatePartySeats() {
+  const result = {};
+  
+  parties.forEach(party => {
+    result[party] = {
+      ruling: party === "自由民主党",
+      seats: 0
+    };
+  });
+  
+  // 小選挙区
+  Object.values(electionData.districts).forEach(districts => {
+    districts.forEach(data => {
+      
+      const winner =
+        data.candidates.find(c => c.elected);
+      
+      if (winner) {
+        
+        if (!result[winner.party]) {
+          result[winner.party] = {
+            ruling: winner.ruling === true,
+            seats: 0
+          };
+        }
+        
+        result[winner.party].seats++;
+      }
+    });
+  });
+  
+  // 比例代表
+  Object.values(electionData.proportional).forEach(block => {
+    block.parties.forEach(partyData => {
+      
+      if (!result[partyData.party]) {
+        result[partyData.party] = {
+          ruling: partyData.ruling === true,
+          seats: 0
+        };
+      }
+      
+      result[partyData.party].seats +=
+        partyData.electedSeats || 0;
+    });
+  });
+  
+  return result;
+}
+
+/* ==================================================
+   与党・未確定・野党 半円議席グラフ
+================================================== */
+
+function updateSeatChart() {
+
+  const container =
+    document.getElementById("seatChart");
+
+  if (!container) return;
+
+
+  /* =========================
+     政党別確定議席
+  ========================= */
+
+  const partySeats = {};
+
+  parties.forEach(party => {
+    partySeats[party] = 0;
+  });
+
+
+  /* =========================
+     小選挙区
+  ========================= */
+
+  Object.values(electionData.districts)
+    .forEach(districts => {
+
+      districts.forEach(district => {
+
+        const winner =
+          district.candidates.find(
+            candidate => candidate.elected
+          );
+
+        if (winner) {
+
+          if (
+            partySeats[winner.party] === undefined
+          ) {
+            partySeats[winner.party] = 0;
+          }
+
+          partySeats[winner.party]++;
+
+        }
+
+      });
+
+    });
+
+
+  /* =========================
+     比例代表
+  ========================= */
+
+  Object.values(electionData.proportional)
+    .forEach(block => {
+
+      block.parties.forEach(partyData => {
+
+        if (
+          partySeats[partyData.party] === undefined
+        ) {
+          partySeats[partyData.party] = 0;
+        }
+
+        partySeats[partyData.party] +=
+          Number(
+            partyData.electedSeats || 0
+          );
+
+      });
+
+    });
+
+
+  /* =========================
+     与党・野党を分類
+     初期並び順を維持
+  ========================= */
+
+  let rulingSeats = 0;
+  let oppositionSeats = 0;
+
+  const rulingParties = [];
+  const oppositionParties = [];
+
+
+  parties.forEach(party => {
+
+    const seats =
+      partySeats[party] || 0;
+
+    if (
+      partyStatus[party] === "ruling"
+    ) {
+
+      rulingSeats += seats;
+
+      rulingParties.push({
+        party,
+        seats
+      });
+
+    } else {
+
+      oppositionSeats += seats;
+
+      oppositionParties.push({
+        party,
+        seats
+      });
+
+    }
+
+  });
+
+
+  /* =========================
+     総議席
+  ========================= */
+
+  const totalSeats =
+    TOTAL_SINGLE_SEATS +
+    TOTAL_PR_SEATS;
+
+
+  /* =========================
+     未確定議席
+  ========================= */
+
+  const confirmedSeats =
+    rulingSeats +
+    oppositionSeats;
+
+  const vacantSeats =
+    Math.max(
+      0,
+      totalSeats - confirmedSeats
+    );
+
+
+  /* =========================
+     半円用割合
+  ========================= */
+
+  const rulingPercent =
+    rulingSeats / totalSeats * 100;
+
+  const vacantPercent =
+    vacantSeats / totalSeats * 100;
+
+  const oppositionPercent =
+    oppositionSeats / totalSeats * 100;
+
+
+  const rulingEnd =
+    rulingPercent;
+
+  const vacantEnd =
+    rulingPercent +
+    vacantPercent;
+
+
+  /* =========================
+     政党一覧
+  ========================= */
+
+  const rulingText =
+    rulingParties
+      .filter(item => item.seats > 0)
+      .map(item =>
+        `${partyNames[item.party] || item.party} ${formatNumber(item.seats)}議席`
+      )
+      .join("<br>");
+
+
+  const oppositionText =
+    oppositionParties
+      .filter(item => item.seats > 0)
+      .map(item =>
+        `${partyNames[item.party] || item.party} ${formatNumber(item.seats)}議席`
+      )
+      .join("<br>");
+
+
+  /* =========================
+     表示
+  ========================= */
+
+  container.innerHTML = `
+
+    <div class="half-seat-chart">
+
+      <div class="half-seat-pie">
+
+        <div
+          class="half-seat-pie-color"
+          style="
+            background:
+              conic-gradient(
+                from 270deg,
+
+                #2563eb
+                0%
+                ${rulingEnd / 2}%,
+
+                #e5e7eb
+                ${rulingEnd / 2}%
+                ${vacantEnd / 2}%,
+
+                #dc2626
+                ${vacantEnd / 2}%
+                50%,
+
+                transparent
+                50%
+                100%
+              );
+          "
+        ></div>
+
+
+        <div class="half-seat-hole">
+
+          <strong>
+            ${formatNumber(confirmedSeats)}
+          </strong>
+
+          <span>
+            確定議席
+          </span>
+
+        </div>
+
+      </div>
+
+
+      <div class="half-seat-info">
+
+        <div class="half-seat-summary">
+
+          <div>
+            <strong>与党</strong>
+            <span>
+              ${formatNumber(rulingSeats)}議席
+            </span>
+          </div>
+
+          <div>
+            <strong>未確定</strong>
+            <span>
+              ${formatNumber(vacantSeats)}議席
+            </span>
+          </div>
+
+          <div>
+            <strong>野党</strong>
+            <span>
+              ${formatNumber(oppositionSeats)}議席
+            </span>
+          </div>
+
+        </div>
+
+
+        <div class="card">
+
+          <h3>政党別確定議席</h3>
+
+          <strong>与党</strong>
+
+          <div>
+            ${
+              rulingText ||
+              "なし"
+            }
+          </div>
+
+          <br>
+
+          <strong>野党</strong>
+
+          <div>
+            ${
+              oppositionText ||
+              "なし"
+            }
+          </div>
+
+        </div>
+
+      </div>
+
+    </div>
+
+  `;
+
+}
+
+/* ==================================================
+   データ入力 都道府県変更
+================================================== */
+
+function changeEditorPrefecture() {
+
+  const editorPref =
+    document.getElementById(
+      "editorPrefSelect"
+    );
+
+  const editorDistrict =
+    document.getElementById(
+      "editorDistrictSelect"
+    );
+
+  if (!editorPref || !editorDistrict) {
+    return;
+  }
+
+  const pref =
+    editorPref.value;
+
+  editorDistrict.innerHTML = "";
+
+  const districts =
+    electionData.districts[pref] || [];
+
+  districts.forEach(
+    (district, index) => {
+
+      const option =
+        document.createElement("option");
+
+      option.value = index;
+
+      option.textContent =
+        `${pref} 第${district.district}区`;
+
+      editorDistrict.appendChild(option);
+
+    }
+  );
+
+  updateDistrictEditor();
+
+}
+
+/* ==================================================
+   小選挙区データ入力画面
+================================================== */
+
+function updateDistrictEditor() {
+
+  const container =
+    document.getElementById(
+      "districtEditor"
+    );
+
+
+  if (!container) {
+    return;
+  }
+
+
+  const prefSelect =
+    document.getElementById(
+      "editorPrefSelect"
+    );
+
+
+  const districtSelect =
+    document.getElementById(
+      "editorDistrictSelect"
+    );
+
+
+  if (!prefSelect || !districtSelect) {
+    return;
+  }
+
+
+  const pref =
+    prefSelect.value;
+
+
+  const index =
+    Number(districtSelect.value);
+
+
+  const data =
+    electionData.districts[pref]?.[index];
+
+
+  if (!data) {
+    container.innerHTML = "";
+    return;
+  }
+
+
+  let html = `
+
+    <div class="card">
+
+      <div class="card-title">
+        ${escapeHTML(pref)}
+        第${data.district}区
+      </div>
+
+
+      <label>
+        有権者数
+      </label>
+
+      <input
+        type="number"
+        min="0"
+        value="${data.eligibleVoters}"
+        onchange="
+          changeDistrictValue(
+            '${escapeHTML(pref)}',
+            ${index},
+            'eligibleVoters',
+            this.value
+          )
+        "
+      >
+
+
+      <label>
+        投票者数
+      </label>
+
+      <input
+        type="number"
+        min="0"
+        value="${data.voters}"
+        onchange="
+          changeDistrictValue(
+            '${escapeHTML(pref)}',
+            ${index},
+            'voters',
+            this.value
+          )
+        "
+      >
+
+      <div class="button-row">
+
+        <button
+          class="btn btn-primary"
+          onclick="
+            displayDistrict();
+            updateNationalSummary();
+          ">
+          更新
+        </button>
+
+      </div>
+
+    </div>
+
+  `;
+
+
+  data.candidates.forEach(
+    (candidate, candidateIndex) => {
+
+      html += `
+
+        <div class="card editor-row">
+
+          <div class="editor-title">
+            候補者${candidateIndex + 1}
+          </div>
+
+
+          <label>
+            候補者名
+          </label>
+
+          <input
+            type="text"
+            value="${escapeHTML(candidate.name)}"
+            onchange="
+              changeCandidateValue(
+                '${escapeHTML(pref)}',
+                ${index},
+                ${candidateIndex},
+                'name',
+                this.value
+              )
+            "
+          >
+
+
+          <label>
+            政党
+          </label>
+
+          <input
+            type="text"
+            value="${escapeHTML(candidate.party)}"
+            onchange="
+              changeCandidateValue(
+                '${escapeHTML(pref)}',
+                ${index},
+                ${candidateIndex},
+                'party',
+                this.value
+              )
+            "
+          >
+
+
+          <label>
+            得票数
+          </label>
+
+          <input
+            type="number"
+            min="0"
+            value="${candidate.votes}"
+            onchange="
+              changeCandidateValue(
+                '${escapeHTML(pref)}',
+                ${index},
+                ${candidateIndex},
+                'votes',
+                this.value
+              )
+            "
+          >
+
+
+          <div class="button-row">
+
+            <button
+              class="btn ${
+                candidate.called
+                  ? "btn-success"
+                  : "btn-gray"
+              }"
+              onclick="
+                toggleCandidateCalled(
+                  '${escapeHTML(pref)}',
+                  ${index},
+                  ${candidateIndex}
+                )
+              ">
+
+              ${
+                candidate.called
+                  ? "当確を解除"
+                  : "当確にする"
+              }
+
+            </button>
+
+
+            <button
+              class="btn ${
+                candidate.elected
+                  ? "btn-primary"
+                  : "btn-gray"
+              }"
+              onclick="
+                toggleCandidateElected(
+                  '${escapeHTML(pref)}',
+                  ${index},
+                  ${candidateIndex}
+                )
+              ">
+
+              ${
+                candidate.elected
+                  ? "議席確定を解除"
+                  : "議席確定"
+              }
+
+            </button>
+
+          </div>
+
+        </div>
+
+      `;
+
+    }
+  );
+
+
+  container.innerHTML = html;
+
+}
+
+
+/* ==================================================
+   小選挙区データ変更
+================================================== */
+
+function changeDistrictValue(
+  pref,
+  index,
+  key,
+  value
+) {
+
+  if (
+    !electionData.districts[pref] ||
+    !electionData.districts[pref][index]
+  ) {
+    return;
+  }
+
+
+  let number =
+    Number(value);
+
+
+  if (!isFinite(number) || number < 0) {
+    number = 0;
+  }
+
+
+  electionData
+    .districts[pref][index][key] =
+    number;
+
+
+  /*
+   * 投票者数が有権者数を超えないようにする
+   */
+
+  const data =
+    electionData.districts[pref][index];
+
+
+  if (
+    data.voters >
+    data.eligibleVoters
+  ) {
+
+    data.voters =
+      data.eligibleVoters;
+
+  }
+
+
+  displayDistrict();
+
+  updateNationalSummary();
+
+}
+
+
+/* ==================================================
+   候補者データ変更
+================================================== */
+
+function changeCandidateValue(
+  pref,
+  districtIndex,
+  candidateIndex,
+  key,
+  value
+) {
+
+  const candidate =
+    electionData
+      .districts[pref]
+      ?.[districtIndex]
+      ?.candidates[candidateIndex];
+
+
+  if (!candidate) {
+    return;
+  }
+
+
+  if (key === "votes") {
+
+    let number =
+      Number(value);
+
+
+    if (!isFinite(number) || number < 0) {
+      number = 0;
+    }
+
+
+    candidate[key] =
+      number;
+
+  } else {
+
+    candidate[key] =
+      value;
+
+  }
+
+
+  displayDistrict();
+
+  updateNationalSummary();
+
+}
+
+
+/* ==================================================
+   当確切り替え
+================================================== */
+
+function toggleCandidateCalled(
+  pref,
+  districtIndex,
+  candidateIndex
+) {
+
+  const candidate =
+    electionData
+      .districts[pref]
+      ?.[districtIndex]
+      ?.candidates[candidateIndex];
+
+
+  if (!candidate) {
+    return;
+  }
+
+
+  candidate.called =
+    !candidate.called;
+
+
+  /*
+   * 画面更新
+   */
+
+  displayDistrict();
+
+  updateDistrictEditor();
+
+  updateNationalSummary();
+
+}
+
+
+/* ==================================================
+   小選挙区 議席確定
+================================================== */
+
+function toggleCandidateElected(
+  pref,
+  districtIndex,
+  candidateIndex
+) {
+
+  const district =
+    electionData
+      .districts[pref]
+      ?.[districtIndex];
+
+
+  if (!district) {
+    return;
+  }
+
+
+  const candidate =
+    district.candidates[candidateIndex];
+
+
+  if (!candidate) {
+    return;
+  }
+
+
+  /*
+   * 1つの選挙区で議席確定できるのは1人
+   */
+
+  district.candidates.forEach(
+    item => {
+
+      item.elected = false;
+
+    }
+  );
+
+
+  candidate.elected = true;
+
+
+  /*
+   * 議席確定した候補者は当確扱い
+   */
+
+  candidate.called = true;
+
+
+  displayDistrict();
+
+  updateDistrictEditor();
+
+  updateNationalSummary();
+
+}
+
+
+/* ==================================================
+   比例代表ブロック選択
+================================================== */
+
+function createBlockSelect() {
+
+  const select =
+    document.getElementById(
+      "blockSelect"
+    );
+
+
+  if (!select) {
+    return;
+  }
+
+
+  select.innerHTML = "";
+
+
+  Object.keys(
+    proportionalBlocks
+  ).forEach(block => {
+
+    const option =
+      document.createElement(
+        "option"
+      );
+
+
+    option.value = block;
+
+    option.textContent =
+      `${block}（${proportionalBlocks[block].seats}議席）`;
+
+
+    select.appendChild(option);
+
+  });
+
+
+  displayProportional();
+
+}
+
+/* ==================================================
+   ドント方式
+================================================== */
+
+function calculateDHonntSeats(block) {
+
+  const data =
+    electionData.proportional[block];
+
+  if (!data) {
+    return;
+  }
+
+  const totalVotes =
+    data.parties.reduce(
+      (sum, party) =>
+        sum + Number(party.votes || 0),
+      0
+    );
+
+  const voters =
+    Number(data.voters || 0);
+
+  /* 開票率100%未満なら確定しない */
+
+  if (
+    voters <= 0 ||
+    totalVotes < voters
+  ) {
+    return;
+  }
+
+  const seatCount =
+    proportionalBlocks[block].seats;
+
+  const quotients = [];
+
+  data.parties.forEach(
+    (party, partyIndex) => {
+
+      const votes =
+        Number(party.votes || 0);
+
+      for (
+        let divisor = 1;
+        divisor <= seatCount;
+        divisor++
+      ) {
+
+        quotients.push({
+          partyIndex: partyIndex,
+          value: votes / divisor
+        });
+
+      }
+
+    }
+  );
+
+  /* 得票数の高い順に並べる */
+
+  quotients.sort(
+    (a, b) => b.value - a.value
+  );
+
+  /* 議席数をリセット */
+
+  data.parties.forEach(
+    party => {
+      party.electedSeats = 0;
+    }
+  );
+
+  /* 上位議席数分を配分 */
+
+  for (
+    let i = 0;
+    i < seatCount;
+    i++
+  ) {
+
+    const result =
+      quotients[i];
+
+    if (!result) {
+      break;
+    }
+
+    data.parties[
+      result.partyIndex
+    ].electedSeats++;
+
+  }
+
+  /* 全議席確定 */
+
+  data.parties.forEach(
+    party => {
+
+      if (party.electedSeats > 0) {
+        party.called = true;
+      }
+
+    }
+  );
+
+}
+
+/* ==================================================
+   比例代表表示
+================================================== */
+
+function displayProportional() {
+
+  const container =
+    document.getElementById(
+      "proportionalDisplay"
+    );
+
+
+  const select =
+    document.getElementById(
+      "blockSelect"
+    );
+
+
+  if (!container || !select) {
+    return;
+  }
+
+
+  const block =
+    select.value;
+
+
+  const data =
+    electionData.proportional[block];
+
+
+  if (!data) {
+    return;
+  }
+
+
+  const totalVotes =
+    data.parties.reduce(
+      (sum, party) => {
+
+        return sum +
+          Number(party.votes || 0);
+
+      },
+      0
+    );
+
+
+  const turnoutRate =
+    calculateProportionalTurnout(data);
+
+
+  const openingRate =
+    calculateProportionalOpening(data);
+
+
+  let html = `
+
+    <div class="card">
+
+      <div class="card-title">
+        ${escapeHTML(block)}
+        比例代表
+      </div>
+
+
+      <div class="counting-grid">
+
+        <div class="counting-box">
+
+          <div class="counting-label">
+            有権者数
+          </div>
+
+          <div class="counting-value">
+            ${formatNumber(
+              data.eligibleVoters
+            )}人
+          </div>
+
+        </div>
+
+
+        <div class="counting-box">
+
+          <div class="counting-label">
+            投票者数
+          </div>
+
+          <div class="counting-value">
+            ${formatNumber(
+              data.voters
+            )}人
+          </div>
+
+        </div>
+
+
+        <div class="counting-box">
+
+          <div class="counting-label">
+            投票率
+          </div>
+
+          <div class="counting-value">
+            ${formatPercent(
+              turnoutRate
+            )}
+          </div>
+
+        </div>
+
+
+        <div class="counting-box">
+
+          <div class="counting-label">
+            開票率
+          </div>
+
+          <div class="counting-value">
+            ${formatPercent(
+              openingRate
+            )}
+          </div>
+
+        </div>
+
+      </div>
+
+    </div>
+
+  `;
+
+
+  /*
+   * 得票順
+   */
+
+  const partiesData =
+    [...data.parties]
+      .sort(
+        (a, b) =>
+          Number(b.votes || 0) -
+          Number(a.votes || 0)
+      );
+
+
+  partiesData.forEach(party => {
+
+    const votes =
+      Number(party.votes || 0);
+
+
+    const percent =
+      totalVotes > 0
+        ? votes /
+          totalVotes *
+          100
+        : 0;
+
+
+    html += `
+
+      <div class="card proportional-party">
+
+        <div class="proportional-top">
+
+          <span class="proportional-party-name">
+            ${escapeHTML(party.party)}
+          </span>
+
+          <span class="proportional-votes">
+            ${formatNumber(votes)}票
+          </span>
+
+        </div>
+
+
+        <div class="proportional-bar-bg">
+
+          <div
+            class="proportional-bar"
+            style="width:${percent}%">
+          </div>
+
+        </div>
+
+
+        <div class="vote-percent">
+          得票率 ${formatPercent(percent)}
+        </div>
+
+
+        <div class="result-badges">
+
+          ${
+            party.called
+              ? `
+                <span class="badge badge-called">
+                  当確
+                </span>
+              `
+              : ""
+          }
+
+
+          ${
+            party.electedSeats > 0
+              ? `
+                <span class="badge badge-proportional">
+                  ${party.electedSeats}議席確定
+                </span>
+              `
+              : ""
+          }
+
+        </div>
+
+      </div>
+
+    `;
+
+  });
+
+
+  container.innerHTML = html;
+
+}
+
+
+/* ==================================================
+   比例代表データ入力
+================================================== */
+
+function createProportionalEditor() {
+
+  const container =
+    document.getElementById(
+      "proportionalEditor"
+    );
+
+
+  if (!container) {
+    return;
+  }
+
+
+  let html = "";
+
+
+  Object.keys(
+    proportionalBlocks
+  ).forEach(block => {
+
+    const data =
+      electionData.proportional[block];
+
+
+    html += `
+
+      <div class="card">
+
+        <div class="card-title">
+
+          ${escapeHTML(block)}
+
+          （${proportionalBlocks[block].seats}議席）
+
+        </div>
+
+
+        <label>
+          有権者数
+        </label>
+
+        <input
+          type="number"
+          min="0"
+          value="${data.eligibleVoters}"
+          onchange="
+            changeProportionalValue(
+              '${escapeHTML(block)}',
+              'eligibleVoters',
+              this.value
+            )
+          "
+        >
+
+
+        <label>
+          投票者数
+        </label>
+
+        <input
+          type="number"
+          min="0"
+          value="${data.voters}"
+          onchange="
+            changeProportionalValue(
+              '${escapeHTML(block)}',
+              'voters',
+              this.value
+            )
+          "
+        >
+
+    `;
+
+
+    data.parties.forEach(
+      (party, partyIndex) => {
+
+        html += `
+
+          <div class="editor-row">
+
+            <div class="editor-title">
+              ${escapeHTML(party.party)}
+            </div>
+
+
+            <label>
+              政党名
+            </label>
+
+            <input
+              type="text"
+              value="${escapeHTML(party.party)}"
+              onchange="
+                changeProportionalParty(
+                  '${escapeHTML(block)}',
+                  ${partyIndex},
+                  'party',
+                  this.value
+                )
+              "
+            >
+
+
+            <label>
+              得票数
+            </label>
+
+            <input
+              type="number"
+              min="0"
+              value="${party.votes}"
+              onchange="
+                changeProportionalParty(
+                  '${escapeHTML(block)}',
+                  ${partyIndex},
+                  'votes',
+                  this.value
+                )
+              "
+            >
+
+
+            <label>
+              確定議席
+            </label>
+
+            <input
+              type="number"
+              min="0"
+              max="${proportionalBlocks[block].seats}"
+              value="${party.electedSeats}"
+              onchange="
+                changeProportionalParty(
+                  '${escapeHTML(block)}',
+                  ${partyIndex},
+                  'electedSeats',
+                  this.value
+                )
+              "
+            >
+
+
+            <div class="button-row">
+
+              <button
+                class="btn ${
+                  party.called
+                    ? "btn-success"
+                    : "btn-gray"
+                }"
+                onclick="
+                  toggleProportionalCalled(
+                    '${escapeHTML(block)}',
+                    ${partyIndex}
+                  )
+                ">
+
+                ${
+                  party.called
+                    ? "当確を解除"
+                    : "当確にする"
+                }
+
+              </button>
+
+            </div>
+
+          </div>
+
+        `;
+
+      });
+
+
+    html += `
+
+      </div>
+
+    `;
+
+  });
+
+
+  container.innerHTML = html;
+
+}
+
+function createPartyStatusEditor() {
+
+  const container =
+    document.getElementById("partyStatusEditor");
+
+  if (!container) return;
+
+  container.innerHTML = "";
+
+  parties.forEach(party => {
+
+    const current =
+      partyStatus[party] || "opposition";
+
+    container.innerHTML += `
+      <div style="
+        display:flex;
+        align-items:center;
+        justify-content:space-between;
+        gap:10px;
+        padding:8px 0;
+        border-bottom:1px solid #ddd;
+      ">
+
+        <strong>${party}</strong>
+
+        <select
+          onchange="changePartyStatus('${party}', this.value)"
+        >
+          <option value="ruling"
+            ${current === "ruling" ? "selected" : ""}>
+            与党
+          </option>
+
+          <option value="opposition"
+            ${current === "opposition" ? "selected" : ""}>
+            野党
+          </option>
+        </select>
+
+      </div>
+    `;
+  });
+}
+
+function changePartyStatus(party, status) {
+
+  partyStatus[party] = status;
+
+  updateSeatChart();
+
+}
+
+/* ==================================================
+   政党名一括変更エディター
+================================================== */
+
+function createPartyNameEditor() {
+
+  const container =
+    document.getElementById("partyNameEditor");
+
+  if (!container) return;
+
+  container.innerHTML = `
+
+    ${parties.map(party => `
+
+      <div style="
+        display:flex;
+        align-items:center;
+        gap:10px;
+        padding:10px 0;
+        border-bottom:1px solid #ddd;
+      ">
+
+        <strong style="
+          min-width:70px;
+        ">
+          ${party}
+        </strong>
+
+        <input
+          type="text"
+          value="${partyNames[party] || party}"
+          data-party="${party}"
+          style="
+            flex:1;
+            padding:8px;
+            box-sizing:border-box;
+          "
+        >
+
+      </div>
+
+    `).join("")}
+
+    <button
+      onclick="applyPartyNames()"
+      style="
+        margin-top:15px;
+        padding:10px 18px;
+        cursor:pointer;
+      "
+    >
+      政党名を一括反映
+    </button>
+
+  `;
+}
+
+
+/* ==================================================
+   政党名を一括反映
+================================================== */
+
+function applyPartyNames() {
+
+  const container =
+    document.getElementById("partyNameEditor");
+
+  if (!container) return;
+
+
+  const inputs =
+    container.querySelectorAll(
+      "input[data-party]"
+    );
+
+
+  inputs.forEach(input => {
+
+    const oldName =
+      input.dataset.party;
+
+    const newName =
+      input.value.trim();
+
+
+    if (!newName) return;
+
+
+    partyNames[oldName] =
+      newName;
+
+  });
+
+
+  /* 表示を更新 */
+
+  createPartyNameEditor();
+  createPartyStatusEditor();
+
+  updateSeatChart();
+
+  displayProportional();
+
+  changeEditorPrefecture();
+
+
+  alert("政党名を反映しました。");
+}
+/* ==================================================
+   比例代表データ変更
+================================================== */
+
+function changeProportionalValue(
+  block,
+  key,
+  value
+) {
+
+  const data =
+    electionData.proportional[block];
+
+  if (!data) {
+    return;
+  }
+
+  let number = Number(value);
+
+  if (!isFinite(number) || number < 0) {
+    number = 0;
+  }
+
+  data[key] = number;
+
+  /* 投票者数が有権者数を超えない */
+
+  if (data.voters > data.eligibleVoters) {
+    data.voters = data.eligibleVoters;
+  }
+
+  createProportionalEditor();
+
+  displayProportional();
+
+  updateNationalSummary();
+}
+
+
+/* ==================================================
+   比例代表政党変更
+================================================== */
+
+function changeProportionalParty(
+  block,
+  partyIndex,
+  key,
+  value
+) {
+
+  const party =
+    electionData
+      .proportional[block]
+      ?.parties[partyIndex];
+
+  if (!party) {
+    return;
+  }
+
+  if (
+    key === "votes" ||
+    key === "electedSeats"
+  ) {
+
+    let number = Number(value);
+
+    if (!isFinite(number) || number < 0) {
+      number = 0;
+    }
+
+    const maxSeats =
+      proportionalBlocks[block].seats;
+
+    if (
+      key === "electedSeats" &&
+      number > maxSeats
+    ) {
+      number = maxSeats;
+    }
+
+    party[key] = number;
+
+  } else {
+
+    party[key] = value;
+
+  }
+
+  createProportionalEditor();
+
+  displayProportional();
+
+  updateNationalSummary();
+}
+
+
+/* ==================================================
+   比例代表 当確
+================================================== */
+
+function toggleProportionalCalled(
+  block,
+  partyIndex
+) {
+
+  const party =
+    electionData
+      .proportional[block]
+      ?.parties[partyIndex];
+
+  if (!party) {
+    return;
+  }
+
+  party.called = !party.called;
+
+  /* 開票率を確認 */
+
+const data =
+  electionData.proportional[block];
+
+const totalVotes =
+  data.parties.reduce(
+    (sum, party) =>
+      sum + Number(party.votes || 0),
+    0
+  );
+
+if (
+  Number(data.voters) > 0 &&
+  totalVotes >= Number(data.voters)
+) {
+
+  calculateDHonntSeats(block);
+
+}
+
+createProportionalEditor();
+
+displayProportional();
+
+updateNationalSummary();
+}
+
+
+/* ==================================================
+   データ保存
+================================================== */
+
+function saveData(
+  showAlert = true
+) {
+
+  const saveData = {
+
+    electionData:
+      electionData,
+
+    partyStatus:
+      partyStatus,
+
+    partyNames:
+      partyNames
+
+  };
+
+
+  localStorage.setItem(
+    "electionSimulationData",
+    JSON.stringify(
+      saveData
+    )
+  );
+
+
+  if (showAlert) {
+
+    alert(
+      "データを保存しました。"
+    );
+
+  }
+
+}
+
+
+/* ==================================================
+   データ読み込み
+================================================== */
+
+function loadData() {
+
+  const saved =
+    localStorage.getItem(
+      "electionSimulationData"
+    );
+
+
+  if (!saved) {
+
+    createInitialData();
+
+    return;
+
+  }
+
+
+  try {
+
+    const data =
+      JSON.parse(saved);
+
+
+    /* 選挙データ */
+
+    if (data.electionData) {
+
+      electionData =
+        data.electionData;
+
+    } else {
+
+      createInitialData();
+
+    }
+
+
+    /* 与党・野党設定 */
+
+    if (data.partyStatus) {
+
+      partyStatus =
+        data.partyStatus;
+
+    }
+
+
+    /* 政党名 */
+
+    if (data.partyNames) {
+
+      partyNames =
+        data.partyNames;
+
+    }
+
+
+  } catch (error) {
+
+    console.error(
+      "データ読み込みエラー",
+      error
+    );
+
+    createInitialData();
+
+  }
+
+}
+
+
+/* ==================================================
+   データリセット
+================================================== */
+
+function resetData() {
+
+  const result =
+    confirm(
+      "初期データに戻しますか？\n現在の入力データは消えます。"
+    );
+
+
+  if (!result) {
+
+    return;
+
+  }
+
+
+  localStorage.removeItem(
+    "electionSimulationData"
+  );
+
+
+  createInitialData();
+
+
+  /* 政党名を初期状態に戻す */
+
+  partyNames = {
+
+    "政党A": "政党A",
+    "政党B": "政党B",
+    "政党C": "政党C",
+    "政党D": "政党D",
+    "政党E": "政党E"
+
+  };
+
+
+  /* 与党・野党を初期状態に戻す */
+
+  partyStatus = {
+
+    "政党A": "ruling",
+    "政党B": "opposition",
+    "政党C": "opposition",
+    "政党D": "opposition",
+    "政党E": "opposition"
+
+  };
+
+
+  createMap();
+
+  createPrefSelect();
+
+  createBlockSelect();
+
+  updateNationalSummary();
+
+  updateSeatChart();
+
+
+  alert(
+    "初期データに戻しました。"
+  );
+
+}
+
+/* ==================================================
+   自動更新
+================================================== */
+
+function refreshAll() {
+
+  displayDistrict();
+
+  displayProportional();
+
+  updateDistrictEditor();
+
+  createProportionalEditor();
+
+  updateNationalSummary();
+
+}
+
+
+/* ==================================================
+   初期化
+================================================== */
+
+loadData();
+
+createMap();
+
+createPrefSelect();
+
+createBlockSelect();
+
+createProportionalEditor();
+
+updateDistrictEditor();
+
+updateNationalSummary();
+
+</script>
+
+<script>
+
+if ("serviceWorker" in navigator) {
+
+  window.addEventListener(
+    "load",
+    () => {
+
+      navigator.serviceWorker
+        .register("./service-worker.js")
+        .then(() => {
+
+          console.log(
+            "Service Worker registered."
+          );
+
+        })
+        .catch(error => {
+
+          console.error(
+            "Service Worker registration failed:",
+            error
+          );
+
+        });
+
+    }
+  );
+
+}
+
+</script>
+</body>
+</html>
