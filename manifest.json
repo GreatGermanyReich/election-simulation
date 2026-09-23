@@ -1,0 +1,13 @@
+{
+  "name": "選挙シミュレーション",
+  "short_name": "選挙シミュレーション",
+  "description": "選挙結果を入力・管理するシミュレーション",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#1d4ed8",
+  "orientation": "portrait"
+}
+
+
+
